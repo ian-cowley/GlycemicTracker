@@ -4,6 +4,8 @@ GlycemicTracker is a premium, high-visual-aesthetic dark mode web application de
 
 Developed as a modern personal health assistant, the application provides a stunning glassmorphic UI with dynamic charting to help users understand how different foods (including those containing alcohol) affect their blood glucose levels over time.
 
+![GlycemicTracker Dashboard](Screenshot.png)
+
 ---
 
 ## 🌟 Key Features
