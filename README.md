@@ -113,3 +113,8 @@ The application will start listening on `http://localhost:5014`. Open your brows
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👥 Credits
+Developed by Ian Cowley and Antigravity (Google DeepMind).
