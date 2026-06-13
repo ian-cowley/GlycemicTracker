@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace CarbTracker.Models
+namespace GlycemicTracker.Models
 {
     public class Food
     {

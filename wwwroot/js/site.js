@@ -1,4 +1,4 @@
-// CarbTracker main JavaScript file
+﻿// GlycemicTracker main JavaScript file
 
 let glucoseChart = null;
 

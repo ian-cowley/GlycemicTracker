@@ -1,11 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 
-namespace CarbTracker.Data
+namespace GlycemicTracker.Data
 {
     public class DatabaseHelper
     {
@@ -14,7 +14,7 @@ namespace CarbTracker.Data
         public DatabaseHelper(IConfiguration configuration)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection") 
-                ?? @"Server=(localdb)\MSSQLLocalDB;Database=CarbTracker;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
+                ?? @"Server=(localdb)\MSSQLLocalDB;Database=GlycemicTracker;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true";
         }
 
         // Expose connection string for DB initialization

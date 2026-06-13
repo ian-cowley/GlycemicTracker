@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace CarbTracker.Models
+namespace GlycemicTracker.Models
 {
     public class GlucoseReading
     {

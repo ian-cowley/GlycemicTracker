@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace CarbTracker.Models
+namespace GlycemicTracker.Models
 {
     public class FoodLog
     {

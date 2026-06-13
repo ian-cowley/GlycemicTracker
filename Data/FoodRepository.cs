@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
-using CarbTracker.Models;
+using GlycemicTracker.Models;
 
-namespace CarbTracker.Data
+namespace GlycemicTracker.Data
 {
     public class FoodRepository
     {

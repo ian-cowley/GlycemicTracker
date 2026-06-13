@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using CarbTracker.Models;
-using CarbTracker.Data;
-using CarbTracker.Services;
+using GlycemicTracker.Models;
+using GlycemicTracker.Data;
+using GlycemicTracker.Services;
 using TinyPdf;
 
-namespace CarbTracker.Controllers
+namespace GlycemicTracker.Controllers
 {
     public class HomeController : Controller
     {
@@ -269,7 +269,7 @@ namespace CarbTracker.Controllers
             var options = new TinyPdfCreate.MarkdownOptions(Compress: true);
             byte[] pdfBytes = TinyPdfCreate.Markdown(sb.ToString(), options);
 
-            return File(pdfBytes, "application/pdf", $"CarbTracker_Doctor_Report_{now:yyyyMMdd}.pdf");
+            return File(pdfBytes, "application/pdf", $"GlycemicTracker_Doctor_Report_{now:yyyyMMdd}.pdf");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

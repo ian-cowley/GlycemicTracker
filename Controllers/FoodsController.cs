@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using CarbTracker.Models;
-using CarbTracker.Data;
+using GlycemicTracker.Models;
+using GlycemicTracker.Data;
 
-namespace CarbTracker.Controllers
+namespace GlycemicTracker.Controllers
 {
     public class FoodsController : Controller
     {

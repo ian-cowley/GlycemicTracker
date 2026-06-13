@@ -1,47 +1,50 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
-namespace CarbTracker.Data
+namespace GlycemicTracker.Data
 {
     public static class DbInitializer
     {
         public static async Task InitializeAsync(string connectionString)
         {
             // 1. Create the database if it doesn't exist.
-            // To do this, we connect to the 'master' database.
-            var masterConnectionString = connectionString.Replace("Database=CarbTracker", "Database=master");
-            // If the connection string doesn't have Database=CarbTracker, let's build a master connection string manually
-            if (!connectionString.Contains("Database="))
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            var dbName = builder.InitialCatalog;
+            if (string.IsNullOrEmpty(dbName))
             {
-                masterConnectionString = @"Server=(localdb)\MSSQLLocalDB;Database=master;Integrated Security=True;TrustServerCertificate=True;";
+                dbName = "GlycemicTracker"; // fallback
             }
+
+            // Connect to master database to check/create the target database
+            builder.InitialCatalog = "master";
+            var masterConnectionString = builder.ConnectionString;
 
             using (var masterConnection = new SqlConnection(masterConnectionString))
             {
                 await masterConnection.OpenAsync();
                 
-                // Check if CarbTracker database exists
-                var checkDbSql = "SELECT database_id FROM sys.databases WHERE name = 'CarbTracker'";
+                // Check if target database exists
+                var checkDbSql = $"SELECT database_id FROM sys.databases WHERE name = '{dbName}'";
                 using (var checkCommand = new SqlCommand(checkDbSql, masterConnection))
                 {
                     var result = await checkCommand.ExecuteScalarAsync();
                     if (result == null)
                     {
                         // Create Database
-                        var createDbSql = "CREATE DATABASE CarbTracker";
+                        var createDbSql = $"CREATE DATABASE {dbName}";
                         using (var createCommand = new SqlCommand(createDbSql, masterConnection))
                         {
                             await createCommand.ExecuteNonQueryAsync();
                         }
-                        // Give LocalDB a moment to provision the files
+                        // Give database engine a moment to provision the files
                         await Task.Delay(2000);
                     }
                 }
             }
 
-            // 2. Create tables in the CarbTracker database
+            // 2. Create tables in the GlycemicTracker database
             using (var connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync();

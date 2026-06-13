@@ -1,5 +1,5 @@
-using CarbTracker.Data;
-using CarbTracker.Services;
+﻿using GlycemicTracker.Data;
+using GlycemicTracker.Services;
 using System;
 using Microsoft.Extensions.Hosting;
 
@@ -15,7 +15,7 @@ builder.Services.AddWindowsService();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register CarbTracker dependencies for raw ADO.NET and calculations
+// Register GlycemicTracker dependencies for raw ADO.NET and calculations
 builder.Services.AddSingleton<DatabaseHelper>();
 builder.Services.AddSingleton<FoodRepository>();
 builder.Services.AddSingleton<LogRepository>();

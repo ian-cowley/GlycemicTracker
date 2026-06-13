@@ -1,4 +1,4 @@
-namespace CarbTracker.Models;
+﻿namespace GlycemicTracker.Models;
 
 public class ErrorViewModel
 {

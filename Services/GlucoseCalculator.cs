@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using CarbTracker.Models;
+using GlycemicTracker.Models;
 
-namespace CarbTracker.Services
+namespace GlycemicTracker.Services
 {
     public class GlucoseCalculator
     {
