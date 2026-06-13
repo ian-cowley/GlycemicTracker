@@ -75,8 +75,16 @@ Developed as a modern personal health assistant, the application provides a stun
 * [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 * [Microsoft SQL Server](https://www.microsoft.com/sql-server/) (or LocalDB)
 
-### 1. Database Setup
-The application dynamically initializes and seeds its own database on startup based on the connection string configured. Around 150 standard foods are pre-loaded into the database.
+### 1. Database Setup & Schema
+The application is self-provisioning. On startup, `DbInitializer` dynamically inspects the database engine, creates the database instance if it is missing, builds the required tables (with appropriate indexes), and pre-seeds around **150 common foods** (complete with macronutrient profiles, Glycemic Index values, and alcohol grams).
+
+The database consists of three primary tables:
+* **`Foods`**: Stores the global library of ingredients and standard foods.
+  * `Id` (INT, PK), `Name` (NVARCHAR), `GlycemicIndex` (INT), `CarbsPer100g`, `SugarPer100g`, `FiberPer100g`, `ProteinPer100g`, `FatPer100g` (DECIMAL), `CaloriesPer100g` (INT), `IsCustom` (BIT), `AlcoholGrams` (DECIMAL).
+* **`FoodLogs`**: Stores meal logs. Each entry represents a portion of a food eaten at a specific time.
+  * `Id` (INT, PK), `FoodId` (INT, FK -> Foods), `AmountGrams` (DECIMAL), `LogTime` (DATETIME2), scaled macro values (`CarbsGrams`, `SugarGrams`, `FiberGrams`, `ProteinGrams`, `FatGrams`), `GlycemicLoad` (DECIMAL), `AlcoholGrams` (DECIMAL).
+* **`GlucoseReadings`**: Stores manual blood glucose checks (finger-prick readings) used to calibrate/validate the curve.
+  * `Id` (INT, PK), `ReadingTime` (DATETIME2), `GlucoseValue` (DECIMAL), `Notes` (NVARCHAR).
 
 ### 2. Configure Connection String (User Secrets)
 To keep sensitive database credentials secure, initialize and configure User Secrets in the project:
