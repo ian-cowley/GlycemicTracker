@@ -1,0 +1,110 @@
+@model List<CarbTracker.Models.Food>
+@{
+    ViewData["Title"] = "Food Library";
+}
+
+<div class="row align-items-center mb-4">
+    <div class="col-md-6">
+        <h1 class="mb-1">Food Library</h1>
+        <p class="text-secondary">Browse standard foods or register custom foods you eat</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a class="btn btn-secondary me-2" asp-action="RecipeBuilder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-journal-plus me-2" viewBox="0 0 16 16">
+                <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
+                <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1h1.5zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1h1.5zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-3a.5.5 0 0 1 0-1h1.5z"/>
+            </svg>
+            Recipe Builder
+        </a>
+        <a class="btn btn-primary" asp-action="Create">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-2" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+            </svg>
+            Add Custom Food
+        </a>
+    </div>
+</div>
+
+<div class="glass-panel mb-4">
+    <div class="row g-2 align-items-center mb-3">
+        <div class="col-md-6">
+            <h4 class="m-0 text-info">All Registered Foods</h4>
+        </div>
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="foodLibrarySearch" placeholder="Type here to filter list..." oninput="filterFoodLibrary()" />
+        </div>
+    </div>
+
+    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-dark table-hover align-middle" style="background: transparent;">
+            <thead>
+                <tr class="text-secondary" style="border-bottom: 2px solid var(--border-color); position: sticky; top: 0; background: var(--bg-tertiary); z-index: 1;">
+                    <th>Food Name</th>
+                    <th class="text-center">Glycemic Index</th>
+                    <th class="text-center">Carbs / 100g</th>
+                    <th class="text-center">Sugar / 100g</th>
+                    <th class="text-center">Fiber / 100g</th>
+                    <th class="text-center">Protein / 100g</th>
+                    <th class="text-center">Fat / 100g</th>
+                    <th class="text-center">Calories / 100g</th>
+                    <th class="text-end">Type</th>
+                </tr>
+            </thead>
+            <tbody id="foodLibraryTableBody">
+                @foreach (var food in Model)
+                {
+                    <tr class="food-row" data-name="@food.Name.ToLower()" style="border-bottom: 1px solid var(--border-color);">
+                        <td class="fw-semibold">@food.Name</td>
+                        <td class="text-center">
+                            @{
+                                var giClass = "gi-low";
+                                if (food.GlycemicIndex > 70) giClass = "gi-high";
+                                else if (food.GlycemicIndex > 55) giClass = "gi-medium";
+                            }
+                            <span class="badge badge-gi @giClass">@food.GlycemicIndex</span>
+                        </td>
+                        <td class="text-center text-warning">@food.CarbsPer100g.ToString("0.0")g</td>
+                        <td class="text-center text-warning">@food.SugarPer100g.ToString("0.0")g</td>
+                        <td class="text-center text-success">@food.FiberPer100g.ToString("0.0")g</td>
+                        <td class="text-center text-success">@food.ProteinPer100g.ToString("0.0")g</td>
+                        <td class="text-center text-info">@food.FatPer100g.ToString("0.0")g</td>
+                        <td class="text-center text-secondary">@food.CaloriesPer100g kcal</td>
+                        <td class="text-end text-nowrap">
+                            @if (food.IsCustom)
+                            {
+                                <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this custom food item?');">
+                                    <input type="hidden" name="id" value="@food.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" style="font-size:0.75rem;">
+                                        Delete
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary opacity-75" style="font-size:0.75rem; padding: 5px 8px;">Standard</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterFoodLibrary() {
+            const query = document.getElementById("foodLibrarySearch").value.toLowerCase().trim();
+            const rows = document.querySelectorAll(".food-row");
+            
+            rows.forEach(row => {
+                const name = row.getAttribute("data-name");
+                if (name.includes(query)) {
+                    row.classList.remove("d-none");
+                } else {
+                    row.classList.add("d-none");
+                }
+            });
+        }
+    </script>
+}

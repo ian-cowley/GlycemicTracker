@@ -1,0 +1,445 @@
+@{
+    ViewData["Title"] = "Recipe Builder";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <div class="row g-4">
+            <!-- Builder Form and Ingredients List -->
+            <div class="col-lg-7">
+                <div class="glass-panel h-100">
+                    <h2 class="mb-1 text-info">Recipe Builder</h2>
+                    <p class="text-secondary mb-4">Combine ingredients and specify portion yields to compile a custom food item.</p>
+
+                    <form asp-action="SaveRecipe" method="post" id="recipeForm">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Recipe Name and Servings -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-8">
+                                <label for="recipeNameInput" class="form-label text-secondary">Recipe Name</label>
+                                <input type="text" class="form-control" id="recipeNameInput" name="recipeName" placeholder="e.g. Chicken Supreme" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="servingsInput" class="form-label text-secondary">Number of Servings</label>
+                                <input type="number" class="form-control" id="servingsInput" name="servings" value="2" min="1" required />
+                            </div>
+                        </div>
+
+                        <!-- Add Ingredient Selector (UI only) -->
+                        <div class="mb-4 p-3 border rounded" style="background: rgba(25, 33, 52, 0.4); border-color: var(--border-color) !important;">
+                            <h5 class="text-white mb-3" style="font-size: 0.95rem;">Add Ingredient</h5>
+                            <div class="row g-2">
+                                <div class="col-md-7">
+                                    <input type="text" class="form-control form-control-sm" id="ingredientSearchBox" placeholder="Search food..." autocomplete="off" />
+                                    <!-- Temporary holders for selected autocomplete ingredient info -->
+                                    <input type="hidden" id="tempFoodId" />
+                                    <input type="hidden" id="tempFoodName" />
+                                    <input type="hidden" id="tempFoodGI" />
+                                    <input type="hidden" id="tempFoodCarbs" />
+                                    <input type="hidden" id="tempFoodSugar" />
+                                    <input type="hidden" id="tempFoodFiber" />
+                                    <input type="hidden" id="tempFoodProtein" />
+                                    <input type="hidden" id="tempFoodFat" />
+                                    <input type="hidden" id="tempFoodCalories" />
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control" id="ingredientAmountInput" value="100" min="1" />
+                                        <span class="input-group-text bg-dark border-secondary text-secondary">g</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <button type="button" class="btn btn-primary btn-sm w-100 h-100" id="btnAddIngredientBtn" disabled>Add</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table of Current Ingredients -->
+                        <h4 class="mb-3 text-white" style="font-size:1.1rem;">Ingredients List</h4>
+                        <div class="table-responsive mb-4" style="max-height: 250px; min-height: 100px;">
+                            <table class="table table-dark table-hover align-middle" style="background: transparent;">
+                                <thead>
+                                    <tr class="text-secondary" style="border-bottom: 2px solid var(--border-color); font-size: 0.85rem;">
+                                        <th>Name</th>
+                                        <th class="text-center">Amount</th>
+                                        <th class="text-center">Carbs</th>
+                                        <th class="text-center">Calories</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredientsTableBody">
+                                    <tr id="emptyIngredientsPlaceholder">
+                                        <td colspan="5" class="text-center text-secondary py-3">No ingredients added yet. Search and add ingredients above.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Container for dynamic hidden inputs to bind list data in MVC -->
+                        <div id="hiddenInputsContainer"></div>
+
+                        <div class="d-flex justify-content-between pt-2">
+                            <a class="btn btn-secondary px-4" asp-action="Index">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5" id="btnSubmitRecipe" disabled>Save Recipe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Compiled Summary Stats Preview -->
+            <div class="col-lg-5">
+                <div class="glass-panel h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <h3 class="mb-2 text-info">Per Serving Preview</h3>
+                        <p class="text-secondary mb-4" style="font-size:0.9rem;">
+                            Live compilation of nutritional values per single serving of the recipe. 
+                            <span class="text-info d-block mt-2">Note: Saving will register a custom food item representing 1 serving.</span>
+                        </p>
+
+                        <!-- Macro Preview cards -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 border rounded text-center" style="background: rgba(25, 33, 52, 0.4); border-color: var(--border-color);">
+                                    <div class="text-secondary text-uppercase small" style="font-size:0.75rem;">Glycemic Index</div>
+                                    <div class="fs-2 fw-bold text-white mt-1" id="previewRecipeGI">0</div>
+                                    <span class="badge badge-gi gi-low mt-1" id="previewRecipeGIBadge">Low GI</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 border rounded text-center" style="background: rgba(25, 33, 52, 0.4); border-color: var(--border-color);">
+                                    <div class="text-secondary text-uppercase small" style="font-size:0.75rem;">Est. Glycemic Load</div>
+                                    <div class="fs-2 fw-bold text-info mt-1" id="previewRecipeGL">0.0</div>
+                                    <span class="badge badge-gi gi-low mt-1" id="previewRecipeGLBadge">Low GL</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nutrients Breakdown -->
+                        <div class="p-3 border rounded mb-4" style="background: rgba(20, 26, 42, 0.4); border-color: var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: var(--border-color) !important;">
+                                <span class="text-secondary">Calories</span>
+                                <strong class="text-white"><span id="previewRecipeCalories">0</span> kcal</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary">Carbohydrates</span>
+                                <strong class="text-warning"><span id="previewRecipeCarbs">0.0</span>g</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 ps-3 font-monospace" style="font-size:0.85rem;">
+                                <span class="text-secondary">- Sugars</span>
+                                <span class="text-warning"><span id="previewRecipeSugar">0.0</span>g</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 ps-3 font-monospace" style="font-size:0.85rem;">
+                                <span class="text-secondary">- Fiber</span>
+                                <span class="text-success"><span id="previewRecipeFiber">0.0</span>g</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary">Protein</span>
+                                <strong class="text-success"><span id="previewRecipeProtein">0.0</span>g</strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-secondary">Fat</span>
+                                <strong class="text-info"><span id="previewRecipeFat">0.0</span>g</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual spike warning -->
+                    <div class="p-3 rounded border border-info d-flex align-items-center" id="recipeSpikeAdviceCard" style="background: rgba(14, 165, 233, 0.05);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-info-circle text-info me-3" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588z"/>
+                        </svg>
+                        <span class="small text-secondary" id="recipeSpikeAdviceText">Compile ingredients to generate medical glycemic recommendations.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let ingredients = [];
+
+        $(document).ready(function () {
+            // Setup Autocomplete for ingredients search box
+            $("#ingredientSearchBox").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: "/Home/SearchFoods",
+                        type: "GET",
+                        data: { term: request.term },
+                        success: function (data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 1,
+                select: function (event, ui) {
+                    // Temporarily store selected food details
+                    $("#tempFoodId").val(ui.item.id);
+                    $("#tempFoodName").val(ui.item.value);
+                    $("#tempFoodGI").val(ui.item.gi);
+                    $("#tempFoodCarbs").val(ui.item.carbs);
+                    $("#tempFoodSugar").val(ui.item.sugar);
+                    $("#tempFoodFiber").val(ui.item.fiber);
+                    $("#tempFoodProtein").val(ui.item.protein);
+                    $("#tempFoodFat").val(ui.item.fat);
+                    $("#tempFoodCalories").val(ui.item.calories);
+
+                    // Enable Add button
+                    $("#btnAddIngredientBtn").prop("disabled", false);
+                }
+            });
+
+            // Handle clicking the "Add Ingredient" button
+            $("#btnAddIngredientBtn").on("click", function () {
+                const id = parseInt($("#tempFoodId").val());
+                const name = $("#tempFoodName").val();
+                const gi = parseInt($("#tempFoodGI").val());
+                const carbs = parseFloat($("#tempFoodCarbs").val());
+                const sugar = parseFloat($("#tempFoodSugar").val());
+                const fiber = parseFloat($("#tempFoodFiber").val());
+                const protein = parseFloat($("#tempFoodProtein").val());
+                const fat = parseFloat($("#tempFoodFat").val());
+                const calories = parseInt($("#tempFoodCalories").val());
+                const amount = parseFloat($("#ingredientAmountInput").val()) || 0;
+
+                if (!id || amount <= 0) return;
+
+                // Check if already in the list
+                const existingIdx = ingredients.findIndex(i => i.id === id);
+                if (existingIdx >= 0) {
+                    ingredients[existingIdx].amount += amount;
+                } else {
+                    ingredients.push({
+                        id: id,
+                        name: name,
+                        gi: gi,
+                        carbsPer100: carbs,
+                        sugarPer100: sugar,
+                        fiberPer100: fiber,
+                        proteinPer100: protein,
+                        fatPer100: fat,
+                        caloriesPer100: calories,
+                        amount: amount
+                    });
+                }
+
+                // Reset inputs
+                $("#ingredientSearchBox").val("").focus();
+                $("#tempFoodId").val("");
+                $("#btnAddIngredientBtn").prop("disabled", true);
+                $("#ingredientAmountInput").val("100");
+
+                updateIngredientsUI();
+            });
+
+            // Handle Servings changes
+            $("#servingsInput").on("input", function () {
+                recalculateRecipeNutrition();
+            });
+
+            // Prevent form submit if empty
+            $("#recipeForm").on("submit", function () {
+                if (ingredients.length === 0) {
+                    alert("Please add at least one ingredient.");
+                    return false;
+                }
+                return true;
+            });
+        });
+
+        function updateIngredientsUI() {
+            const $body = $("#ingredientsTableBody");
+            $body.empty();
+
+            if (ingredients.length === 0) {
+                $body.append(`
+                    <tr id="emptyIngredientsPlaceholder">
+                        <td colspan="5" class="text-center text-secondary py-3">No ingredients added yet. Search and add ingredients above.</td>
+                    </tr>
+                `);
+                $("#btnSubmitRecipe").prop("disabled", true);
+            } else {
+                ingredients.forEach((ing, index) => {
+                    const carbs = (ing.carbsPer100 * ing.amount) / 100.0;
+                    const calories = (ing.caloriesPer100 * ing.amount) / 100.0;
+
+                    $body.append(`
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td><div class="fw-semibold text-white">${ing.name}</div></td>
+                            <td class="text-center">
+                                <div class="input-group input-group-sm mx-auto" style="width: 100px;">
+                                    <input type="number" class="form-control bg-dark border-secondary text-center text-white py-0 px-1" 
+                                           value="${ing.amount}" min="1" onchange="updateIngredientAmount(${ing.id}, this.value)" />
+                                    <span class="input-group-text bg-dark border-secondary text-secondary py-0 px-2" style="font-size:0.75rem;">g</span>
+                                </div>
+                            </td>
+                            <td class="text-center text-warning">${carbs.toFixed(1)}g</td>
+                            <td class="text-center text-secondary">${Math.round(calories)} kcal</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-link text-danger p-0" onclick="removeIngredient(${ing.id})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+                $("#btnSubmitRecipe").prop("disabled", false);
+            }
+
+            // Sync hidden inputs for MVC form submission
+            syncHiddenInputs();
+
+            // Run Live Calculations
+            recalculateRecipeNutrition();
+        }
+
+        function updateIngredientAmount(id, val) {
+            const amount = parseFloat(val) || 0;
+            if (amount <= 0) return;
+
+            const idx = ingredients.findIndex(i => i.id === id);
+            if (idx >= 0) {
+                ingredients[idx].amount = amount;
+                updateIngredientsUI();
+            }
+        }
+
+        function removeIngredient(id) {
+            ingredients = ingredients.filter(i => i.id !== id);
+            updateIngredientsUI();
+        }
+
+        function syncHiddenInputs() {
+            const $container = $("#hiddenInputsContainer");
+            $container.empty();
+
+            ingredients.forEach((ing, index) => {
+                $container.append(`
+                    <input type="hidden" name="ingredients[${index}].FoodId" value="${ing.id}" />
+                    <input type="hidden" name="ingredients[${index}].AmountGrams" value="${ing.amount}" />
+                `);
+            });
+        }
+
+        function recalculateRecipeNutrition() {
+            const servings = parseInt($("#servingsInput").val()) || 1;
+
+            let totalCarbs = 0;
+            let totalSugar = 0;
+            let totalFiber = 0;
+            let totalProtein = 0;
+            let totalFat = 0;
+            let totalCalories = 0;
+
+            let weightedGiSum = 0;
+            let totalCarbsForGiWeight = 0;
+
+            ingredients.forEach(ing => {
+                const scale = ing.amount / 100.0;
+                const ingCarbs = ing.carbsPer100 * scale;
+
+                totalCarbs += ingCarbs;
+                totalSugar += ing.sugarPer100 * scale;
+                totalFiber += ing.fiberPer100 * scale;
+                totalProtein += ing.proteinPer100 * scale;
+                totalFat += ing.fatPer100 * scale;
+                totalCalories += ing.caloriesPer100 * scale;
+
+                if (ing.gi > 0 && ingCarbs > 0) {
+                    weightedGiSum += ing.gi * ingCarbs;
+                    totalCarbsForGiWeight += ingCarbs;
+                }
+            });
+
+            // Weighted average GI
+            let finalGi = 0;
+            if (totalCarbsForGiWeight > 0) {
+                finalGi = Math.round(weightedGiSum / totalCarbsForGiWeight);
+            }
+
+            // Per serving calculations
+            const servCarbs = totalCarbs / servings;
+            const servSugar = totalSugar / servings;
+            const servFiber = totalFiber / servings;
+            const servProtein = totalProtein / servings;
+            const servFat = totalFat / servings;
+            const servCalories = totalCalories / servings;
+            
+            // Glycemic Load (GL) = (Carbs * GI) / 100
+            const servGL = (servCarbs * finalGi) / 100.0;
+
+            // Update DOM Elements
+            $("#previewRecipeGI").text(finalGi);
+            $("#previewRecipeGL").text(servGL.toFixed(1));
+            $("#previewRecipeCarbs").text(servCarbs.toFixed(1));
+            $("#previewRecipeSugar").text(servSugar.toFixed(1));
+            $("#previewRecipeFiber").text(servFiber.toFixed(1));
+            $("#previewRecipeProtein").text(servProtein.toFixed(1));
+            $("#previewRecipeFat").text(servFat.toFixed(1));
+            $("#previewRecipeCalories").text(Math.round(servCalories));
+
+            // Update GI Badge
+            const $giBadge = $("#previewRecipeGIBadge");
+            $giBadge.removeClass("gi-low gi-medium gi-high");
+            if (finalGi <= 55) {
+                $giBadge.addClass("gi-low").text("Low GI");
+            } else if (finalGi <= 70) {
+                $giBadge.addClass("gi-medium").text("Med GI");
+            } else {
+                $giBadge.addClass("gi-high").text("High GI");
+            }
+
+            // Update GL Badge
+            const $glBadge = $("#previewRecipeGLBadge");
+            $glBadge.removeClass("gi-low gi-medium gi-high");
+            if (servGL <= 10) {
+                $glBadge.addClass("gi-low").text("Low GL");
+            } else if (servGL <= 19) {
+                $glBadge.addClass("gi-medium").text("Medium GL");
+            } else {
+                $glBadge.addClass("gi-high").text("High GL");
+            }
+
+            // Update spike advice card
+            const $adviceCard = $("#recipeSpikeAdviceCard");
+            const $adviceText = $("#recipeSpikeAdviceText");
+
+            $adviceCard.removeClass("border-info border-success border-warning border-danger")
+                       .css("background-color", "");
+
+            if (ingredients.length === 0) {
+                $adviceCard.addClass("border-info").css("background-color", "rgba(14, 165, 233, 0.05)");
+                $adviceText.html('<span class="text-info font-weight-bold">Status:</span> Add ingredients to generate glycemic spikes assessment.');
+                return;
+            }
+
+            if (servCarbs === 0) {
+                $adviceCard.addClass("border-success").css("background-color", "rgba(16, 185, 129, 0.05)");
+                $adviceText.html('<strong class="text-success">Ideal Glycemic Safety:</strong> This meal contains zero carbohydrates. It will not trigger a direct glucose spike.');
+            } else if (servGL <= 10) {
+                $adviceCard.addClass("border-success").css("background-color", "rgba(16, 185, 129, 0.05)");
+                $adviceText.html('<strong class="text-success">Glycemic Safe:</strong> This meal has a low glycemic load (' + servGL.toFixed(1) + '). Spikes are highly unlikely.');
+            } else if (servGL <= 19) {
+                $adviceCard.addClass("border-warning").css("background-color", "rgba(245, 158, 11, 0.05)");
+                $adviceText.html('<strong class="text-warning">Moderate Glycemic Impact:</strong> This meal has a medium glycemic load. It may trigger a moderate glucose spike. Monitor your 2h postprandial readings.');
+            } else {
+                $adviceCard.addClass("border-danger").css("background-color", "rgba(239, 68, 68, 0.05)");
+                
+                // Add tip about protein/fat slowing absorption if protein/fat is high
+                let bufferTip = "";
+                if (servProtein + servFat > 15) {
+                    bufferTip = " The high protein/fat content will slow down digestion, stretching the spike later in time.";
+                }
+                
+                $adviceText.html('<strong class="text-danger">High Glycemic Spike Warning:</strong> This meal has a high glycemic load (' + servGL.toFixed(1) + '). A glucose spike above 7.8 mmol/L is highly anticipated.' + bufferTip);
+            }
+        }
+    </script>
+}

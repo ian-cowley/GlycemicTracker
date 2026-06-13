@@ -1,0 +1,345 @@
+/* Custom Google Font: Inter & Montserrat */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700;800&display=swap');
+
+:root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: rgba(20, 26, 42, 0.7);
+    --bg-tertiary: #192134;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    
+    --color-accent-blue: #0ea5e9;
+    --color-accent-blue-glow: rgba(14, 165, 233, 0.35);
+    
+    --color-accent-cyan: #06b6d4;
+    
+    --color-accent-red: #ef4444;
+    --color-accent-red-glow: rgba(239, 68, 68, 0.35);
+    
+    --color-accent-green: #10b981;
+    --color-accent-orange: #f59e0b;
+    
+    --border-color: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(12px);
+}
+
+body {
+    background-color: var(--bg-primary);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.08) 0px, transparent 50%),
+        radial-gradient(at 50% 0%, rgba(6, 182, 212, 0.05) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin-bottom: 0;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+    background: var(--bg-secondary);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    padding: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Navbar */
+.navbar-custom {
+    background: rgba(10, 14, 23, 0.8) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 0;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    color: var(--text-primary) !important;
+}
+
+.nav-link {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--color-accent-blue) !important;
+}
+
+/* Stats Cards */
+.stats-card {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    cursor: help;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-accent-blue);
+}
+
+.stats-card.accent-red::before {
+    background: var(--color-accent-red);
+}
+
+.stats-card.accent-cyan::before {
+    background: var(--color-accent-cyan);
+}
+
+.stats-card.accent-green::before {
+    background: var(--color-accent-green);
+}
+
+.stats-card.accent-orange::before {
+    background: var(--color-accent-orange);
+}
+
+.stats-title {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.stats-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.stats-unit {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Custom Controls & Inputs */
+.form-control, .form-select {
+    background-color: rgba(25, 33, 52, 0.5);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-tertiary);
+    border-color: var(--color-accent-blue);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 4px var(--color-accent-blue-glow);
+}
+
+.form-control::placeholder {
+    color: #6b7280;
+}
+
+.btn-primary {
+    background-color: var(--color-accent-blue);
+    border-color: var(--color-accent-blue);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 24px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px var(--color-accent-blue-glow);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #0284c7;
+    border-color: #0284c7;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px var(--color-accent-blue-glow);
+}
+
+.btn-secondary {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 12px 24px;
+}
+
+.btn-secondary:hover {
+    background-color: #242f49;
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+/* Graph Container */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 380px;
+}
+
+/* Autocomplete Suggestion Box */
+.ui-autocomplete {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', sans-serif !important;
+    max-height: 250px !important;
+    overflow-y: auto !important;
+    padding: 8px 0 !important;
+    z-index: 1050 !important;
+}
+
+.ui-menu-item {
+    padding: 2px 0 !important;
+}
+
+.ui-menu-item-wrapper {
+    padding: 8px 16px !important;
+    transition: background 0.2s ease !important;
+    border: none !important;
+    color: var(--text-primary) !important;
+}
+
+.ui-menu-item-wrapper.ui-state-active {
+    background: var(--color-accent-blue) !important;
+    color: #ffffff !important;
+    border: none !important;
+    margin: 0 !important;
+}
+
+/* Time presets */
+.time-preset-btn {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 6px;
+    margin-bottom: 6px;
+}
+
+/* Badges and Lists */
+.food-list-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 0;
+    transition: background 0.2s ease;
+}
+
+.food-list-item:last-child {
+    border-bottom: none;
+}
+
+.badge-gi {
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.gi-high {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--color-accent-red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.gi-medium {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: var(--color-accent-orange);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.gi-low {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--color-accent-green);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.footer {
+    background-color: rgba(10, 14, 23, 0.8);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    padding: 20px 0;
+    margin-top: 50px;
+}
+
+/* Micro-animations */
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.pulse-red {
+    animation: pulseGlow 2s infinite;
+    border-radius: 50%;
+}
+
+/* Tab button toggles styling */
+.chart-time-toggle {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(25, 33, 52, 0.5);
+    color: var(--text-secondary);
+    padding: 6px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.chart-time-toggle.active {
+    background: var(--color-accent-blue);
+    color: #ffffff;
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 4px 12px var(--color-accent-blue-glow);
+}
+
+/* Tooltip Custom Styles matching dark mode and glassmorphism */
+.tooltip {
+    --bs-tooltip-bg: #151d2e !important;
+    --bs-tooltip-color: var(--text-primary) !important;
+    --bs-tooltip-border-radius: 12px !important;
+    opacity: 0.98 !important;
+}
+
+.tooltip-inner {
+    text-align: left !important;
+    max-width: 280px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+    padding: 12px 16px !important;
+    font-family: 'Inter', sans-serif !important;
+    line-height: 1.4 !important;
+}
+
+.tooltip .tooltip-arrow::before {
+    border-top-color: #151d2e !important;
+    border-bottom-color: #151d2e !important;
+}
