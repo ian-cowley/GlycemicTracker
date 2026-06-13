@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using GlycemicTracker.Models;
 using GlycemicTracker.Data;
+using GlycemicTracker.Services;
 
 namespace GlycemicTracker.Controllers
 {
@@ -35,7 +36,7 @@ namespace GlycemicTracker.Controllers
             }
 
             // Determine log time (handling custom backdate or time offset)
-            DateTime logTime = DateTime.Now;
+            DateTime logTime = TimeHelper.UkNow;
             if (timeOffsetMinutes.HasValue)
             {
                 logTime = logTime.AddMinutes(-timeOffsetMinutes.Value);
@@ -90,7 +91,7 @@ namespace GlycemicTracker.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            DateTime readingTime = DateTime.Now;
+            DateTime readingTime = TimeHelper.UkNow;
             if (!string.IsNullOrWhiteSpace(readingTimeStr))
             {
                 if (DateTime.TryParse(readingTimeStr, out var parsedTime))

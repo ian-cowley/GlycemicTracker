@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace GlycemicTracker.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var now = DateTime.Now;
+            var now = TimeHelper.UkNow;
             var start = now.Date;
             var end = start.AddDays(1);
 
@@ -47,6 +47,17 @@ namespace GlycemicTracker.Controllers
             ViewBag.RecentReadings = recentReadings;
 
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult TestTime()
+        {
+            return Json(new {
+                now = TimeHelper.UkNow.ToString("yyyy-MM-ddTHH:mm:ss"),
+                utc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss"),
+                tz = TimeZoneInfo.Local.Id,
+                tzDisplay = TimeZoneInfo.Local.DisplayName
+            });
         }
 
         [HttpGet]
@@ -72,7 +83,7 @@ namespace GlycemicTracker.Controllers
         [HttpGet]
         public async Task<IActionResult> GetGlucoseChartData(string timeframe = "Today")
         {
-            var now = DateTime.Now;
+            var now = TimeHelper.UkNow;
             DateTime start;
             DateTime end;
 
@@ -122,7 +133,7 @@ namespace GlycemicTracker.Controllers
         [HttpGet]
         public async Task<IActionResult> DownloadReport()
         {
-            var now = DateTime.Now;
+            var now = TimeHelper.UkNow;
             var start = now.Date.AddDays(-7);
             var end = now.Date.AddDays(1);
 

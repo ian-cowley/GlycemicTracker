@@ -1,4 +1,4 @@
-﻿@using GlycemicTracker.Services
+@using GlycemicTracker.Services
 @using GlycemicTracker.Models
 @{
     ViewData["Title"] = "Dashboard";
@@ -158,7 +158,7 @@
                 <!-- Custom DateTime Input (shown only when custom is clicked) -->
                 <div class="mb-3 d-none" id="customTimeContainer">
                     <label for="logTimeStr" class="form-label text-secondary">Select Custom Date & Time (Backdate)</label>
-                    <input type="datetime-local" class="form-control" id="logTimeStr" name="logTimeStr" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                    <input type="datetime-local" class="form-control" id="logTimeStr" name="logTimeStr" value="@TimeHelper.UkNow.ToString("yyyy-MM-ddTHH:mm")" />
                 </div>
 
                 <!-- Calculations Preview -->
@@ -207,7 +207,7 @@
 
                 <div class="mb-3">
                     <label for="readingTimeStr" class="form-label text-secondary">Reading Date & Time</label>
-                    <input type="datetime-local" class="form-control" id="readingTimeStr" name="readingTimeStr" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                    <input type="datetime-local" class="form-control" id="readingTimeStr" name="readingTimeStr" value="@TimeHelper.UkNow.ToString("yyyy-MM-ddTHH:mm")" required />
                 </div>
 
                 <div class="text-end pt-2">
