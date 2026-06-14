@@ -1,4 +1,4 @@
-﻿// GlycemicTracker main JavaScript file
+// GlycemicTracker main JavaScript file
 
 let glucoseChart = null;
 
@@ -150,8 +150,20 @@ function updatePortionHelper(foodName) {
         helperHtml = "<i class='bi bi-info-circle me-1'></i>1 dried date is about <strong>7-8g</strong>";
     } else if (name.includes("bacon")) {
         helperHtml = "<i class='bi bi-info-circle me-1'></i>1 slice of cooked bacon is about <strong>8g</strong>";
+    } else if (name.includes("ham")) {
+        helperHtml = "<i class='bi bi-info-circle me-1'></i>1 slice of ham is about <strong>25g</strong> (4 slices ≈ 100g)";
+    } else if (name.includes("cheddar") || name.includes("cheese")) {
+        helperHtml = "<i class='bi bi-info-circle me-1'></i>1 typical portion of cheese is about <strong>30g</strong>";
     } else if (name.includes("tomato")) {
         helperHtml = "<i class='bi bi-info-circle me-1'></i>1 medium tomato is about <strong>80-90g</strong>";
+    } else if (name.includes("onion")) {
+        if (name.includes("pickled")) {
+            helperHtml = "<i class='bi bi-info-circle me-1'></i>1 portion of pickled onions is about <strong>50g</strong>";
+        } else {
+            helperHtml = "<i class='bi bi-info-circle me-1'></i>1 medium onion is about <strong>80-90g</strong>";
+        }
+    } else if (name.includes("olive")) {
+        helperHtml = "<i class='bi bi-info-circle me-1'></i>1/4 pack of olives is about <strong>18g</strong>";
     }
     
     if (helperHtml) {
@@ -197,10 +209,12 @@ function initializeGlucoseChart(timeframe) {
     $(".chart-time-toggle").removeClass("active");
     $(`.chart-time-toggle[data-range='${timeframe}']`).addClass("active");
 
+    const targetDate = $("#targetDate").val() || "";
+
     $.ajax({
         url: "/Home/GetGlucoseChartData",
         type: "GET",
-        data: { timeframe: timeframe },
+        data: { timeframe: timeframe, date: targetDate },
         success: function (data) {
             drawChart(data.points, timeframe);
             updateDashboardStats(data.stats);

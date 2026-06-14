@@ -28,23 +28,34 @@ namespace GlycemicTracker.Controllers
             _calculator = calculator;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? date = null)
         {
             var now = TimeHelper.UkNow;
-            var start = now.Date;
+            var targetDate = now.Date;
+            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+            {
+                targetDate = parsedDate.Date;
+            }
+
+            var start = targetDate;
             var end = start.AddDays(1);
 
-            // Fetch today's food logs and glucose readings
-            var logs = await _logRepo.GetFoodLogsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1)); // fetch extra for boundary calculations
+            // Fetch food logs and glucose readings for this target date (pad by 1 day on each side for boundary/overlap math)
+            var logs = await _logRepo.GetFoodLogsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
             var readings = await _logRepo.GetReadingsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
 
-            var stats = _calculator.CalculateStats(logs, readings, now);
-            var recentLogs = await _logRepo.GetRecentFoodLogsAsync(10);
-            var recentReadings = await _logRepo.GetRecentReadingsAsync(10);
+            var statsTime = targetDate == now.Date ? now : targetDate.AddHours(23).AddMinutes(55);
+            var stats = _calculator.CalculateStats(logs, readings, statsTime, targetDate);
+
+            // Filter specific logs/readings recorded strictly on the target day to show in history lists
+            var dayLogs = logs.Where(l => l.LogTime >= start && l.LogTime < end).OrderByDescending(l => l.LogTime).ToList();
+            var dayReadings = readings.Where(r => r.ReadingTime >= start && r.ReadingTime < end).OrderByDescending(r => r.ReadingTime).ToList();
 
             ViewBag.Stats = stats;
-            ViewBag.RecentLogs = recentLogs;
-            ViewBag.RecentReadings = recentReadings;
+            ViewBag.RecentLogs = dayLogs;
+            ViewBag.RecentReadings = dayReadings;
+            ViewBag.TargetDate = targetDate;
+            ViewBag.IsToday = targetDate == now.Date;
 
             return View();
         }
@@ -81,30 +92,45 @@ namespace GlycemicTracker.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetGlucoseChartData(string timeframe = "Today")
+        public async Task<IActionResult> GetGlucoseChartData(string timeframe = "Today", string? date = null)
         {
             var now = TimeHelper.UkNow;
+            var targetDate = now.Date;
+            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+            {
+                targetDate = parsedDate.Date;
+            }
+
             DateTime start;
             DateTime end;
 
             switch (timeframe)
             {
                 case "Last24Hours":
-                    start = now.AddHours(-24);
-                    end = now.AddHours(4); // predict 4 hours in the future
+                    if (targetDate == now.Date)
+                    {
+                        start = now.AddHours(-24);
+                        end = now.AddHours(4); // predict 4 hours in the future
+                    }
+                    else
+                    {
+                        // Fallback to full day view if viewing historical date
+                        start = targetDate;
+                        end = targetDate.AddDays(1);
+                    }
                     break;
                 case "Yesterday":
-                    start = now.Date.AddDays(-1);
-                    end = now.Date;
+                    start = targetDate.AddDays(-1);
+                    end = targetDate;
                     break;
                 case "Last7Days":
-                    start = now.Date.AddDays(-7);
-                    end = now.Date.AddDays(1);
+                    start = targetDate.AddDays(-7);
+                    end = targetDate.AddDays(1);
                     break;
                 case "Today":
                 default:
-                    start = now.Date;
-                    end = now.Date.AddDays(1);
+                    start = targetDate;
+                    end = targetDate.AddDays(1);
                     break;
             }
 
@@ -113,7 +139,9 @@ namespace GlycemicTracker.Controllers
             var readings = await _logRepo.GetReadingsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
 
             var points = _calculator.GenerateCurve(logs, readings, start, end);
-            var stats = _calculator.CalculateStats(logs, readings, now);
+            
+            var statsTime = targetDate == now.Date ? now : targetDate.AddHours(23).AddMinutes(55);
+            var stats = _calculator.CalculateStats(logs, readings, statsTime, targetDate);
 
             return Json(new
             {

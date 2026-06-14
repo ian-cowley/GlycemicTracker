@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
@@ -280,7 +280,16 @@ namespace GlycemicTracker.Data
                 ("Hamburger (Fast Food)", 65, 30.0, 6.0, 1.8, 14.0, 10.0, 265),
                 ("Glazed Donut", 76, 51.0, 27.0, 1.5, 4.9, 19.0, 398),
                 ("Corn Tortilla Chips", 72, 65.0, 1.1, 6.0, 7.0, 23.0, 489),
-                ("Salted Pretzels", 83, 80.0, 2.2, 3.0, 10.0, 2.6, 380)
+                ("Salted Pretzels", 83, 80.0, 2.2, 3.0, 10.0, 2.6, 380),
+                
+                // Custom User Tesco Foods
+                ("Tesco Unsmoked Back Bacon Rashers", 0, 0.5, 0.5, 0.5, 17.4, 13.2, 191),
+                ("Tesco Finest White Loaf", 75, 45.5, 4.6, 2.9, 8.0, 1.1, 230),
+                ("Tesco Finest Jersey Royals", 62, 14.9, 1.1, 1.8, 1.8, 0.1, 71),
+                ("Tesco British Crumbed Ham Slices", 0, 2.1, 1.0, 0.1, 21.2, 2.0, 112),
+                ("Tesco Mature Cheddar", 0, 0.1, 0.1, 0.0, 25.4, 34.9, 416),
+                ("Tesco Sweet Pickled Silverskin Onions", 35, 7.6, 4.7, 1.9, 0.5, 0.3, 39),
+                ("Tesco Pitted Green Olives", 15, 2.0, 2.0, 2.5, 1.4, 21.0, 208)
             };
 
             var sql = @"

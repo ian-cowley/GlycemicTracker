@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GlycemicTracker.Models;
@@ -156,9 +156,9 @@ namespace GlycemicTracker.Services
             return Math.Max(3.0, glucose);
         }
 
-        public DashboardStats CalculateStats(List<FoodLog> logs, List<GlucoseReading> readings, DateTime now)
+        public DashboardStats CalculateStats(List<FoodLog> logs, List<GlucoseReading> readings, DateTime now, DateTime? targetDate = null)
         {
-            var todayStart = now.Date;
+            var todayStart = (targetDate ?? now).Date;
             var todayEnd = todayStart.AddDays(1);
 
             // Filter today's logs

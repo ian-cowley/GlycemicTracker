@@ -5,16 +5,70 @@
     var stats = ViewBag.Stats as GlucoseCalculator.DashboardStats;
     var recentLogs = ViewBag.RecentLogs as List<FoodLog> ?? new List<FoodLog>();
     var recentReadings = ViewBag.RecentReadings as List<GlucoseReading> ?? new List<GlucoseReading>();
+
+    var now = TimeHelper.UkNow;
+    var targetDate = (DateTime)ViewBag.TargetDate;
+    var isToday = (bool)ViewBag.IsToday;
+    
+    // Default time input value: target date with current time-of-day
+    var defaultInputTime = targetDate.Add(now.TimeOfDay).ToString("yyyy-MM-ddTHH:mm");
 }
 
 <!-- Dashboard Header -->
 <div class="row align-items-center mb-4">
-    <div class="col-md-6">
+    <div class="col-md-5">
         <h1 class="mb-1">Glycemic Controller</h1>
-        <p class="text-secondary">Tracking food-induced glucose response & glycemic load</p>
+        <p class="text-secondary mb-md-0">Tracking food-induced glucose response & glycemic load</p>
     </div>
-    <div class="col-md-6 text-md-end">
-        <a class="btn btn-outline-info me-2" asp-controller="Home" asp-action="DownloadReport" target="_blank" style="border-radius: 8px; padding: 6px 16px; font-weight: 500;">
+    <div class="col-md-7 d-flex flex-wrap align-items-center justify-content-md-end gap-2 mt-2 mt-md-0">
+        <!-- Date Navigator -->
+        <input type="hidden" id="targetDate" value="@targetDate.ToString("yyyy-MM-dd")" />
+        <div class="date-navigator d-flex align-items-center bg-dark border border-secondary rounded-3 px-2 py-1" style="background: rgba(25, 33, 52, 0.5) !important; border-color: rgba(255,255,255,0.15) !important;">
+            <!-- Back 7 Days -->
+            <a class="btn btn-link text-info p-1" href="?date=@(targetDate.AddDays(-7).ToString("yyyy-MM-dd"))" title="Back 7 days">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+            </a>
+            <!-- Back 1 Day -->
+            <a class="btn btn-link text-info p-1" href="?date=@(targetDate.AddDays(-1).ToString("yyyy-MM-dd"))" title="Previous day">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+            </a>
+            
+            <!-- Date picker label and hidden input -->
+            <div class="mx-2 text-white fw-semibold position-relative" style="font-size: 0.9rem; min-width: 130px; text-align: center; cursor: pointer;">
+                <span id="dateDisplayLabel">
+                    @if (isToday)
+                    {
+                        <text>Today, @targetDate.ToString("dd MMM")</text>
+                    }
+                    else
+                    {
+                        <text>@targetDate.ToString("dddd, dd MMM")</text>
+                    }
+                </span>
+                <input type="date" id="datePicker" class="position-absolute opacity-0 top-0 start-0 w-100 h-100" style="cursor: pointer;" value="@targetDate.ToString("yyyy-MM-dd")" onchange="window.location.href='?date=' + this.value" max="@now.Date.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <!-- Forward 1 Day -->
+            <a class="btn btn-link text-info p-1 @(isToday ? "disabled text-secondary" : "")" href="?date=@(targetDate.AddDays(1).ToString("yyyy-MM-dd"))" title="Next day">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </a>
+            <!-- Forward 7 Days -->
+            <a class="btn btn-link text-info p-1 @(isToday ? "disabled text-secondary" : "")" href="?date=@(targetDate.AddDays(7) > now.Date ? now.Date.ToString("yyyy-MM-dd") : targetDate.AddDays(7).ToString("yyyy-MM-dd"))" title="Forward 7 days">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    <path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </a>
+        </div>
+
+        <a class="btn btn-outline-info" asp-controller="Home" asp-action="DownloadReport" target="_blank" style="border-radius: 8px; padding: 6px 16px; font-weight: 500;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-pdf-fill me-1" viewBox="0 0 16 16">
                 <path d="M5.523 12.424c.14-.082.293-.162.459-.238a7.878 7.878 0 0 1-.45.606c-.28.33-.52.496-.696.496-.111 0-.185-.053-.223-.157-.04-.112-.007-.272.097-.432.13-.199.37-.367.813-.475zm2.715-4.498a4.953 4.953 0 0 1-.397 1.502 3.14 3.14 0 0 0-.472-.65 2.184 2.184 0 0 1-.365-.733c.122-.317.185-.643.185-.972 0-.255-.026-.463-.077-.625a.48.48 0 0 1 .122-.494c.14-.144.307-.162.409-.008.141.213.123.561-.05 1.047-.101.281-.228.604-.376.93zM10.11 9.616c.074.208.121.412.142.608.02.185-.01.336-.089.452-.08.117-.215.18-.403.18-.402 0-.917-.306-1.545-.918a13.677 13.677 0 0 1-.45-.44c.414-.158.855-.262 1.32-.313a7.493 7.493 0 0 1 .937-.038c.15 0 .285.011.403.033a1.86 1.86 0 0 1 .453.136c.224.09.3.224.232.383z"/>
                 <path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3zM4.165 13.668c.09.18.23.343.438.419.207.075.412.04.58-.11.317-.283.587-.733.799-1.302.213-.57.355-1.236.42-1.959l-.024-.044c-.387.54-.855.93-1.378 1.157-.538.232-.974.272-1.21.08-.261-.212-.3-.633-.108-1.157.199-.543.615-.997 1.156-1.294.062-.034.129-.065.197-.095a8.564 8.564 0 0 1-.185-1.05c-.19-.76-.324-1.48-.396-2.137a11.196 11.196 0 0 1-.228-1.57c-.062-.531-.026-.947.108-1.216.145-.29.414-.424.712-.352.327.08.577.34.707.747.201.63.12 1.455-.19 2.396-.183.548-.466 1.201-.811 1.84a7.86 7.86 0 0 1 .218 1.22c.07.49.123.94.158 1.332a8.88 8.88 0 0 1 1.62-.077c.4-.003.75.05 1.02.154.278.107.453.284.51.52.052.222-.047.533-.314.779-.276.255-.632.378-1.012.378-.838 0-1.604-.472-2.185-1.397a7.58 7.58 0 0 1-.275-.485c-.061.222-.153.446-.273.671-.35.66-.82 1.11-1.3 1.306z"/>
@@ -22,9 +76,12 @@
             PDF Report
         </a>
         <div class="btn-group" role="group">
-            <button type="button" class="btn chart-time-toggle active" data-range="Today" onclick="initializeGlucoseChart('Today')">Today</button>
-            <button type="button" class="btn chart-time-toggle" data-range="Last24Hours" onclick="initializeGlucoseChart('Last24Hours')">Last 24h</button>
-            <button type="button" class="btn chart-time-toggle" data-range="Yesterday" onclick="initializeGlucoseChart('Yesterday')">Yesterday</button>
+            <button type="button" class="btn chart-time-toggle active" data-range="Today" onclick="initializeGlucoseChart('Today')">Day View</button>
+            @if (isToday)
+            {
+                <button type="button" class="btn chart-time-toggle" data-range="Last24Hours" onclick="initializeGlucoseChart('Last24Hours')">Last 24h</button>
+            }
+            <button type="button" class="btn chart-time-toggle" data-range="Last7Days" onclick="initializeGlucoseChart('Last7Days')">Last 7d</button>
         </div>
     </div>
 </div>
@@ -158,7 +215,7 @@
                 <!-- Custom DateTime Input (shown only when custom is clicked) -->
                 <div class="mb-3 d-none" id="customTimeContainer">
                     <label for="logTimeStr" class="form-label text-secondary">Select Custom Date & Time (Backdate)</label>
-                    <input type="datetime-local" class="form-control" id="logTimeStr" name="logTimeStr" value="@TimeHelper.UkNow.ToString("yyyy-MM-ddTHH:mm")" />
+                    <input type="datetime-local" class="form-control" id="logTimeStr" name="logTimeStr" value="@defaultInputTime" />
                 </div>
 
                 <!-- Calculations Preview -->
@@ -207,7 +264,7 @@
 
                 <div class="mb-3">
                     <label for="readingTimeStr" class="form-label text-secondary">Reading Date & Time</label>
-                    <input type="datetime-local" class="form-control" id="readingTimeStr" name="readingTimeStr" value="@TimeHelper.UkNow.ToString("yyyy-MM-ddTHH:mm")" required />
+                    <input type="datetime-local" class="form-control" id="readingTimeStr" name="readingTimeStr" value="@defaultInputTime" required />
                 </div>
 
                 <div class="text-end pt-2">
