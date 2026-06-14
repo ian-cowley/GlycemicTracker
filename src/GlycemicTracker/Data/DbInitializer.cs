@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
@@ -129,19 +130,8 @@ namespace GlycemicTracker.Data
                     await command.ExecuteNonQueryAsync();
                 }
 
-                // 3. Seed foods if table is empty
-                var checkEmptySql = "SELECT COUNT(*) FROM Foods";
-                int count = 0;
-                using (var command = new SqlCommand(checkEmptySql, connection))
-                {
-                    var countResult = await command.ExecuteScalarAsync();
-                    count = countResult != null ? Convert.ToInt32(countResult) : 0;
-                }
-
-                if (count == 0)
-                {
-                    await SeedFoodsAsync(connection);
-                }
+                // 3. Seed and synchronize foods
+                await SeedFoodsAsync(connection);
             }
         }
 
@@ -293,14 +283,42 @@ namespace GlycemicTracker.Data
                 ("Tesco Caesar Dressing", 15, 6.6, 3.9, 0.5, 1.5, 44.0, 429)
             };
 
-            var sql = @"
-                INSERT INTO Foods (Name, GlycemicIndex, CarbsPer100g, SugarPer100g, FiberPer100g, ProteinPer100g, FatPer100g, CaloriesPer100g, IsCustom, AlcoholGrams)
-                VALUES (@Name, @GI, @Carbs, @Sugar, @Fiber, @Protein, @Fat, @Calories, 0, @Alcohol)";
-
             using (var transaction = connection.BeginTransaction())
             {
                 try
                 {
+                    // 1. Create temporary table
+                    var createTempTableSql = @"
+                        CREATE TABLE #TempFoods (
+                            Name NVARCHAR(150) COLLATE Database_Default,
+                            GlycemicIndex INT,
+                            CarbsPer100g DECIMAL(5,2),
+                            SugarPer100g DECIMAL(5,2),
+                            FiberPer100g DECIMAL(5,2),
+                            ProteinPer100g DECIMAL(5,2),
+                            FatPer100g DECIMAL(5,2),
+                            CaloriesPer100g INT,
+                            IsCustom BIT,
+                            AlcoholGrams DECIMAL(5,2)
+                        );";
+                    using (var createTempCmd = new SqlCommand(createTempTableSql, connection, transaction))
+                    {
+                        await createTempCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // 2. Populate DataTable
+                    var dt = new DataTable();
+                    dt.Columns.Add("Name", typeof(string));
+                    dt.Columns.Add("GlycemicIndex", typeof(int));
+                    dt.Columns.Add("CarbsPer100g", typeof(decimal));
+                    dt.Columns.Add("SugarPer100g", typeof(decimal));
+                    dt.Columns.Add("FiberPer100g", typeof(decimal));
+                    dt.Columns.Add("ProteinPer100g", typeof(decimal));
+                    dt.Columns.Add("FatPer100g", typeof(decimal));
+                    dt.Columns.Add("CaloriesPer100g", typeof(int));
+                    dt.Columns.Add("IsCustom", typeof(bool));
+                    dt.Columns.Add("AlcoholGrams", typeof(decimal));
+
                     foreach (var food in seedFoods)
                     {
                         double alcohol = 0.0;
@@ -308,20 +326,58 @@ namespace GlycemicTracker.Data
                         else if (food.Name == "Beer (Regular)") alcohol = 3.6;
                         else if (food.Name == "Red Wine") alcohol = 10.0;
 
-                        using (var command = new SqlCommand(sql, connection, transaction))
-                        {
-                            command.Parameters.AddWithValue("@Name", food.Name);
-                            command.Parameters.AddWithValue("@GI", food.GI);
-                            command.Parameters.AddWithValue("@Carbs", food.Carbs);
-                            command.Parameters.AddWithValue("@Sugar", food.Sugar);
-                            command.Parameters.AddWithValue("@Fiber", food.Fiber);
-                            command.Parameters.AddWithValue("@Protein", food.Protein);
-                            command.Parameters.AddWithValue("@Fat", food.Fat);
-                            command.Parameters.AddWithValue("@Calories", food.Calories);
-                            command.Parameters.AddWithValue("@Alcohol", alcohol);
-                            await command.ExecuteNonQueryAsync();
-                        }
+                        dt.Rows.Add(
+                            food.Name,
+                            food.GI,
+                            (decimal)food.Carbs,
+                            (decimal)food.Sugar,
+                            (decimal)food.Fiber,
+                            (decimal)food.Protein,
+                            (decimal)food.Fat,
+                            food.Calories,
+                            false,
+                            (decimal)alcohol
+                        );
                     }
+
+                    // 3. Bulk Copy to Temp Table (batch size 5000 as requested)
+                    using (var bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction))
+                    {
+                        bulkCopy.DestinationTableName = "#TempFoods";
+                        bulkCopy.BatchSize = 5000;
+                        await bulkCopy.WriteToServerAsync(dt);
+                    }
+
+                    // 4. Merge Temp Table into Target Table
+                    var mergeSql = @"
+                        MERGE INTO Foods AS Target
+                        USING #TempFoods AS Source
+                        ON Target.Name = Source.Name
+                        WHEN MATCHED THEN
+                            UPDATE SET 
+                                GlycemicIndex = Source.GlycemicIndex,
+                                CarbsPer100g = Source.CarbsPer100g,
+                                SugarPer100g = Source.SugarPer100g,
+                                FiberPer100g = Source.FiberPer100g,
+                                ProteinPer100g = Source.ProteinPer100g,
+                                FatPer100g = Source.FatPer100g,
+                                CaloriesPer100g = Source.CaloriesPer100g,
+                                AlcoholGrams = Source.AlcoholGrams
+                        WHEN NOT MATCHED THEN
+                            INSERT (Name, GlycemicIndex, CarbsPer100g, SugarPer100g, FiberPer100g, ProteinPer100g, FatPer100g, CaloriesPer100g, IsCustom, AlcoholGrams)
+                            VALUES (Source.Name, Source.GlycemicIndex, Source.CarbsPer100g, Source.SugarPer100g, Source.FiberPer100g, Source.ProteinPer100g, Source.FatPer100g, Source.CaloriesPer100g, Source.IsCustom, Source.AlcoholGrams);";
+
+                    using (var mergeCmd = new SqlCommand(mergeSql, connection, transaction))
+                    {
+                        await mergeCmd.ExecuteNonQueryAsync();
+                    }
+
+                    // 5. Clean up temporary table
+                    using (var dropTempCmd = new SqlCommand("DROP TABLE #TempFoods", connection, transaction))
+                    {
+                        await dropTempCmd.ExecuteNonQueryAsync();
+                    }
+
                     await transaction.CommitAsync();
                 }
                 catch
