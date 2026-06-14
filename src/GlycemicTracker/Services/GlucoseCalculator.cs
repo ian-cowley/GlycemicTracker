@@ -33,7 +33,8 @@ namespace GlycemicTracker.Services
             List<FoodLog> logs, 
             List<GlucoseReading> readings, 
             DateTime start, 
-            DateTime end)
+            DateTime end,
+            List<GlycemicParameters>? parameters)
         {
             var points = new List<GlucosePoint>();
             var current = start;
@@ -41,7 +42,7 @@ namespace GlycemicTracker.Services
             // Generate points in 5-minute increments
             while (current <= end)
             {
-                var estVal = CalculateGlucoseAtTime(current, logs);
+                var estVal = CalculateGlucoseAtTime(current, logs, parameters);
                 
                 // Find actual reading if one exists within 5 minutes of this time point
                 var actualReading = readings
@@ -62,19 +63,26 @@ namespace GlycemicTracker.Services
             return points;
         }
 
-        public double CalculateGlucoseAtTime(DateTime time, List<FoodLog> logs)
+        public double CalculateGlucoseAtTime(DateTime time, List<FoodLog> logs, List<GlycemicParameters>? parameters)
         {
-            double glucose = BaselineGlucose;
+            var activeParam = parameters?
+                .Where(p => p.StartDate.Date <= time.Date)
+                .OrderByDescending(p => p.StartDate)
+                .FirstOrDefault();
+
+            double baseline = activeParam?.BaselineGlucose ?? BaselineGlucose;
+            double irFactor = activeParam?.InsulinResistanceFactor ?? 0.160;
+            double dawnAmp = activeParam?.DawnAmplitude ?? 3.6;
+
+            double glucose = baseline;
             double totalSuppression = 0.0;
 
             // Dawn Phenomenon: circadian morning glucose surge peaking around 08:00 AM (local time).
             // Formulated as a Gaussian curve: Amplitude * exp(-(hour - peakHour)^2 / (2 * sigma^2)).
-            // An amplitude of 3.6 mmol/L perfectly calibrates the baseline (5.0) to match the user's observed 08:24 finger-prick reading of 8.6 mmol/L.
             double timeOfDayHours = time.Hour + (time.Minute / 60.0) + (time.Second / 3600.0);
             double peakHour = 8.0;   // 08:00 AM
             double sigma = 1.25;     // spreads the curve from ~4:30 AM to ~11:30 AM
-            double dawnAmplitude = 3.6;  // mmol/L surge height
-            double dawnContribution = dawnAmplitude * Math.Exp(-Math.Pow(timeOfDayHours - peakHour, 2.0) / (2.0 * Math.Pow(sigma, 2.0)));
+            double dawnContribution = dawnAmp * Math.Exp(-Math.Pow(timeOfDayHours - peakHour, 2.0) / (2.0 * Math.Pow(sigma, 2.0)));
             glucose += dawnContribution;
 
             foreach (var log in logs)
@@ -100,9 +108,8 @@ namespace GlycemicTracker.Services
                 double glycemicLoad = log.GlycemicLoad;
                 if (glycemicLoad <= 0) continue;
 
-                // Modeled peak glucose rise: each GL unit raises glucose by 0.16 mmol/L
-                // (Using 0.16 since user has HbA1c of 78, indicating higher insulin resistance and larger spikes)
-                double peakIncrease = glycemicLoad * 0.16;
+                // Modeled peak glucose rise: each GL unit raises glucose by irFactor mmol/L
+                double peakIncrease = glycemicLoad * irFactor;
 
                 // Calculate Time to Peak (T_peak) in hours based on GI and macronutrients
                 double tPeakBase = 0.75; // Default 45 minutes for high GI
@@ -166,7 +173,7 @@ namespace GlycemicTracker.Services
             return Math.Max(3.0, glucose);
         }
 
-        public DashboardStats CalculateStats(List<FoodLog> logs, List<GlucoseReading> readings, DateTime now, DateTime? targetDate = null)
+        public DashboardStats CalculateStats(List<FoodLog> logs, List<GlucoseReading> readings, DateTime now, List<GlycemicParameters>? parameters, DateTime? targetDate = null)
         {
             var todayStart = (targetDate ?? now).Date;
             var todayEnd = todayStart.AddDays(1);
@@ -193,9 +200,14 @@ namespace GlycemicTracker.Services
 
             // Generate a continuous curve for today to calculate Time In Range (TIR) and Peak
             // We evaluate from start of today until end of today at 5 minute intervals
-            var todayPoints = GenerateCurve(logs, readings, todayStart, todayEnd);
+            var todayPoints = GenerateCurve(logs, readings, todayStart, todayEnd, parameters);
 
-            double peakGlucose = BaselineGlucose;
+            double baselineForDay = parameters?
+                .Where(p => p.StartDate.Date <= todayStart)
+                .OrderByDescending(p => p.StartDate)
+                .FirstOrDefault()?.BaselineGlucose ?? BaselineGlucose;
+
+            double peakGlucose = baselineForDay;
             int normalCount = 0;
             int redCount = 0;
             int totalCount = todayPoints.Count;
@@ -229,7 +241,7 @@ namespace GlycemicTracker.Services
             int minutesRed = redCount * 5; // 5 minute increments
 
             // Estimated current glucose level (right now)
-            double currentGlucose = CalculateGlucoseAtTime(now, logs);
+            double currentGlucose = CalculateGlucoseAtTime(now, logs, parameters);
             
             // If there's a very recent actual reading (within 30 mins), blend it or show actual
             var recentReading = readings

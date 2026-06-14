@@ -17,15 +17,18 @@ namespace GlycemicTracker.Controllers
         private readonly FoodRepository _foodRepo;
         private readonly LogRepository _logRepo;
         private readonly GlucoseCalculator _calculator;
+        private readonly SettingsRepository _settingsRepo;
 
         public HomeController(
             FoodRepository foodRepo, 
             LogRepository logRepo, 
-            GlucoseCalculator calculator)
+            GlucoseCalculator calculator,
+            SettingsRepository settingsRepo)
         {
             _foodRepo = foodRepo;
             _logRepo = logRepo;
             _calculator = calculator;
+            _settingsRepo = settingsRepo;
         }
 
         public async Task<IActionResult> Index(string? date = null)
@@ -43,9 +46,10 @@ namespace GlycemicTracker.Controllers
             // Fetch food logs and glucose readings for this target date (pad by 1 day on each side for boundary/overlap math)
             var logs = await _logRepo.GetFoodLogsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
             var readings = await _logRepo.GetReadingsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
+            var parameters = await _settingsRepo.GetAllParametersAsync();
 
             var statsTime = targetDate == now.Date ? now : targetDate.AddHours(23).AddMinutes(55);
-            var stats = _calculator.CalculateStats(logs, readings, statsTime, targetDate);
+            var stats = _calculator.CalculateStats(logs, readings, statsTime, parameters, targetDate);
 
             // Filter specific logs/readings recorded strictly on the target day to show in history lists
             var dayLogs = logs.Where(l => l.LogTime >= start && l.LogTime < end).OrderByDescending(l => l.LogTime).ToList();
@@ -137,11 +141,12 @@ namespace GlycemicTracker.Controllers
             // Fetch logs and readings for calculation (pad by 1 day on each side for overlap math)
             var logs = await _logRepo.GetFoodLogsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
             var readings = await _logRepo.GetReadingsForTimeRangeAsync(start.AddDays(-1), end.AddDays(1));
+            var parameters = await _settingsRepo.GetAllParametersAsync();
 
-            var points = _calculator.GenerateCurve(logs, readings, start, end);
+            var points = _calculator.GenerateCurve(logs, readings, start, end, parameters);
             
             var statsTime = targetDate == now.Date ? now : targetDate.AddHours(23).AddMinutes(55);
-            var stats = _calculator.CalculateStats(logs, readings, statsTime, targetDate);
+            var stats = _calculator.CalculateStats(logs, readings, statsTime, parameters, targetDate);
 
             return Json(new
             {
@@ -168,12 +173,13 @@ namespace GlycemicTracker.Controllers
             // Fetch last 7 days of logs & readings
             var logs = await _logRepo.GetFoodLogsForTimeRangeAsync(start, end);
             var readings = await _logRepo.GetReadingsForTimeRangeAsync(start, end);
+            var parameters = await _settingsRepo.GetAllParametersAsync();
 
             // Calculate Today's (24h) stats using the existing stats calculator
-            var statsToday = _calculator.CalculateStats(logs, readings, now);
+            var statsToday = _calculator.CalculateStats(logs, readings, now, parameters);
 
             // Calculate 7-Day statistics
-            var points7Days = _calculator.GenerateCurve(logs, readings, start, end);
+            var points7Days = _calculator.GenerateCurve(logs, readings, start, end, parameters);
             
             double peak7Days = 5.0; // baseline
             double sumGlucose7Days = 0;

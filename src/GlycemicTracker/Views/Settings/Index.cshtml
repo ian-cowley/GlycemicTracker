@@ -1,0 +1,156 @@
+@model List<GlycemicTracker.Models.GlycemicParameters>
+@{
+    ViewData["Title"] = "Sensitivity Settings";
+    var oldestParam = Model.OrderBy(p => p.StartDate).FirstOrDefault();
+}
+
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-6 text-white fw-bold mb-1">
+                <i class="bi bi-sliders text-info me-2"></i>Sensitivity & Physiological Settings
+            </h1>
+            <p class="text-secondary mb-0">
+                Calibrate the glycemic response simulator over time as your insulin sensitivity and baseline health improve.
+            </p>
+        </div>
+    </div>
+
+    <!-- Parameter Glossary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="glass-panel border-info h-100 p-3" style="background: rgba(14, 165, 233, 0.03);">
+                <h5 class="text-info fw-semibold mb-2"><i class="bi bi-activity me-2"></i>Baseline Glucose</h5>
+                <p class="text-secondary small mb-0">
+                    The fasting steady-state glucose level (in mmol/L) your body returns to when no food or active spike is present. A healthy non-diabetic range is typically <strong>4.0 to 5.5 mmol/L</strong>.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-panel border-warning h-100 p-3" style="background: rgba(245, 158, 11, 0.03);">
+                <h5 class="text-warning fw-semibold mb-2"><i class="bi bi-shield-exclamation me-2"></i>Insulin Resistance (IR) Factor</h5>
+                <p class="text-secondary small mb-0">
+                    Determines how high your glucose spikes per unit of Glycemic Load (GL). A value of <strong>0.160</strong> represents high insulin resistance (larger spikes). As sensitivity recovers, normal values fall between <strong>0.050 and 0.100</strong>.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-panel border-danger h-100 p-3" style="background: rgba(239, 68, 68, 0.03);">
+                <h5 class="text-danger fw-semibold mb-2"><i class="bi bi-brightness-high me-2"></i>Dawn Surge Amplitude</h5>
+                <p class="text-secondary small mb-0">
+                    The height of the early morning circadian glucose release (peaking around 08:00 AM) caused by cortisol and growth hormone dumps. A healthy response is <strong>0.0 to 1.0 mmol/L</strong>; diabetic surges can be <strong>2.0 to 4.0 mmol/L</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Record Adjustment Card -->
+        <div class="col-lg-4">
+            <div class="card glass-panel h-100 shadow border-secondary">
+                <div class="card-body p-4">
+                    <h3 class="card-title h5 text-white fw-bold mb-3 border-bottom pb-2" style="border-color: rgba(255,255,255,0.1) !important;">
+                        <i class="bi bi-plus-circle text-info me-2"></i>Add Adjustment Override
+                    </h3>
+                    <p class="text-secondary small mb-4">
+                        Add a new adjustment record. The simulator automatically matches each date with the latest active settings row in effect.
+                    </p>
+
+                    <form asp-controller="Settings" asp-action="Create" method="post" autocomplete="off">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                        <div class="mb-3">
+                            <label for="StartDate" class="form-label text-secondary small">Effective Start Date</label>
+                            <input type="date" class="form-control text-white" id="StartDate" name="StartDate" required style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);" />
+                            <span class="text-danger small" data-valmsg-for="StartDate"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="BaselineGlucose" class="form-label text-secondary small">Baseline Glucose (mmol/L)</label>
+                            <input type="number" step="0.1" class="form-control text-white" id="BaselineGlucose" name="BaselineGlucose" value="5.0" required style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);" />
+                            <span class="text-danger small" data-valmsg-for="BaselineGlucose"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="InsulinResistanceFactor" class="form-label text-secondary small">Insulin Resistance Factor</label>
+                            <input type="number" step="0.001" class="form-control text-white" id="InsulinResistanceFactor" name="InsulinResistanceFactor" value="0.160" required style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);" />
+                            <div class="form-text text-secondary small" style="font-size: 0.75rem;">Scale factor mapping Glycemic Load units to spike height.</div>
+                            <span class="text-danger small" data-valmsg-for="InsulinResistanceFactor"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="DawnAmplitude" class="form-label text-secondary small">Dawn Surge Amplitude (mmol/L)</label>
+                            <input type="number" step="0.1" class="form-control text-white" id="DawnAmplitude" name="DawnAmplitude" value="3.6" required style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15);" />
+                            <span class="text-danger small" data-valmsg-for="DawnAmplitude"></span>
+                        </div>
+
+                        <div class="text-end pt-3">
+                            <button type="submit" class="btn btn-info w-100" style="border-radius: 8px; font-weight: 500;">
+                                <i class="bi bi-check-lg me-1"></i>Apply Adjustment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adjustment History Log Table -->
+        <div class="col-lg-8">
+            <div class="card glass-panel h-100 shadow border-secondary">
+                <div class="card-body p-4">
+                    <h3 class="card-title h5 text-white fw-bold mb-3 border-bottom pb-2" style="border-color: rgba(255,255,255,0.1) !important;">
+                        <i class="bi bi-clock-history text-info me-2"></i>Sensitivity Calibration History
+                    </h3>
+
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-custom mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Effective From</th>
+                                    <th class="text-center">Baseline</th>
+                                    <th class="text-center">IR Factor</th>
+                                    <th class="text-center">Dawn Surge</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.OrderByDescending(p => p.StartDate))
+                                {
+                                    <tr>
+                                        <td class="align-middle fw-semibold text-white">
+                                            @if (item.Id == oldestParam?.Id)
+                                            {
+                                                <span>@item.StartDate.ToString("dd MMM yyyy")</span>
+                                                <span class="badge bg-secondary ms-2 small" style="font-size: 0.7rem;">System Default</span>
+                                            }
+                                            else
+                                            {
+                                                <span>@item.StartDate.ToString("dd MMM yyyy")</span>
+                                            }
+                                        </td>
+                                        <td class="align-middle text-center text-info">@item.BaselineGlucose.ToString("F1") <span class="small text-secondary">mmol/L</span></td>
+                                        <td class="align-middle text-center text-warning">@item.InsulinResistanceFactor.ToString("F3")</td>
+                                        <td class="align-middle text-center text-danger">@item.DawnAmplitude.ToString("F1") <span class="small text-secondary">mmol/L</span></td>
+                                        <td class="align-middle text-end">
+                                            @if (item.Id != oldestParam?.Id)
+                                            {
+                                                <form asp-controller="Settings" asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this adjustment record?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm p-1" style="border-radius: 6px;" title="Delete Override">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

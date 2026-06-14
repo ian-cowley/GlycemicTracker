@@ -115,6 +115,36 @@ namespace GlycemicTracker.Data
                     await command.ExecuteNonQueryAsync();
                 }
 
+                // Create GlycemicParameters Table
+                var createGlycemicParametersTableSql = @"
+                    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'GlycemicParameters')
+                    BEGIN
+                        CREATE TABLE GlycemicParameters (
+                            Id INT IDENTITY(1,1) PRIMARY KEY,
+                            StartDate DATE NOT NULL UNIQUE,
+                            BaselineGlucose DECIMAL(4,1) NOT NULL DEFAULT 5.0,
+                            InsulinResistanceFactor DECIMAL(5,3) NOT NULL DEFAULT 0.160,
+                            DawnAmplitude DECIMAL(4,1) NOT NULL DEFAULT 3.6
+                        );
+                        CREATE INDEX IX_GlycemicParameters_StartDate ON GlycemicParameters(StartDate);
+                    END";
+                using (var command = new SqlCommand(createGlycemicParametersTableSql, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
+                // Seed default glycemic parameters if table is empty
+                var seedParametersSql = @"
+                    IF (SELECT COUNT(*) FROM GlycemicParameters) = 0
+                    BEGIN
+                        INSERT INTO GlycemicParameters (StartDate, BaselineGlucose, InsulinResistanceFactor, DawnAmplitude)
+                        VALUES ('2026-01-01', 5.0, 0.160, 3.6);
+                    END";
+                using (var command = new SqlCommand(seedParametersSql, connection))
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+
                 // Schema Migration: Add AlcoholGrams column if missing from existing database tables
                 var migrateSchemaSql = @"
                     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Foods') AND name = 'AlcoholGrams')

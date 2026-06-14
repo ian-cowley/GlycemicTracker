@@ -1,4 +1,4 @@
-﻿using GlycemicTracker.Data;
+using GlycemicTracker.Data;
 using GlycemicTracker.Services;
 using System;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +19,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<DatabaseHelper>();
 builder.Services.AddSingleton<FoodRepository>();
 builder.Services.AddSingleton<LogRepository>();
+builder.Services.AddSingleton<SettingsRepository>();
 builder.Services.AddSingleton<GlucoseCalculator>();
 
 var app = builder.Build();
