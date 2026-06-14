@@ -289,7 +289,8 @@ namespace GlycemicTracker.Data
                 ("Tesco British Crumbed Ham Slices", 0, 2.1, 1.0, 0.1, 21.2, 2.0, 112),
                 ("Tesco Mature Cheddar", 0, 0.1, 0.1, 0.0, 25.4, 34.9, 416),
                 ("Tesco Sweet Pickled Silverskin Onions", 35, 7.6, 4.7, 1.9, 0.5, 0.3, 39),
-                ("Tesco Pitted Green Olives", 15, 2.0, 2.0, 2.5, 1.4, 21.0, 208)
+                ("Tesco Pitted Green Olives", 15, 2.0, 2.0, 2.5, 1.4, 21.0, 208),
+                ("Tesco Caesar Dressing", 15, 6.6, 3.9, 0.5, 1.5, 44.0, 429)
             };
 
             var sql = @"

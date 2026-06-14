@@ -164,6 +164,8 @@ function updatePortionHelper(foodName) {
         }
     } else if (name.includes("olive")) {
         helperHtml = "<i class='bi bi-info-circle me-1'></i>1/4 pack of olives is about <strong>18g</strong>";
+    } else if (name.includes("caesar") || name.includes("dressing")) {
+        helperHtml = "<i class='bi bi-info-circle me-1'></i>1 tablespoon of dressing is about <strong>15g/ml</strong>";
     }
     
     if (helperHtml) {
