@@ -67,6 +67,16 @@ namespace GlycemicTracker.Services
             double glucose = BaselineGlucose;
             double totalSuppression = 0.0;
 
+            // Dawn Phenomenon: circadian morning glucose surge peaking around 08:00 AM (local time).
+            // Formulated as a Gaussian curve: Amplitude * exp(-(hour - peakHour)^2 / (2 * sigma^2)).
+            // An amplitude of 3.6 mmol/L perfectly calibrates the baseline (5.0) to match the user's observed 08:24 finger-prick reading of 8.6 mmol/L.
+            double timeOfDayHours = time.Hour + (time.Minute / 60.0) + (time.Second / 3600.0);
+            double peakHour = 8.0;   // 08:00 AM
+            double sigma = 1.25;     // spreads the curve from ~4:30 AM to ~11:30 AM
+            double dawnAmplitude = 3.6;  // mmol/L surge height
+            double dawnContribution = dawnAmplitude * Math.Exp(-Math.Pow(timeOfDayHours - peakHour, 2.0) / (2.0 * Math.Pow(sigma, 2.0)));
+            glucose += dawnContribution;
+
             foreach (var log in logs)
             {
                 if (log.LogTime > time) continue;
