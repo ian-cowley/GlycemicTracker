@@ -317,6 +317,12 @@ namespace GlycemicTracker.Controllers
             return File(pdfBytes, "application/pdf", $"GlycemicTracker_Doctor_Report_{now:yyyyMMdd}.pdf");
         }
 
+        [HttpGet]
+        public IActionResult HelpGuides()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
