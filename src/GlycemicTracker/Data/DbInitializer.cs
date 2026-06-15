@@ -311,7 +311,8 @@ namespace GlycemicTracker.Data
                 ("Tesco Sweet Pickled Silverskin Onions", 35, 7.6, 4.7, 1.9, 0.5, 0.3, 39),
                 ("Tesco Pitted Green Olives", 15, 2.0, 2.0, 2.5, 1.4, 21.0, 208),
                 ("Tesco Caesar Dressing", 15, 6.6, 3.9, 0.5, 1.5, 44.0, 429),
-                ("Tesco Finest Cooked Jumbo King Prawns", 0, 0.4, 0.4, 0.0, 18.4, 0.5, 80)
+                ("Tesco Finest Cooked Jumbo King Prawns", 0, 0.4, 0.4, 0.0, 18.4, 0.5, 80),
+                ("Tesco Italian Chopped Tomatoes", 35, 4.0, 4.0, 0.9, 1.4, 0.2, 25)
             };
 
             using (var transaction = connection.BeginTransaction())
