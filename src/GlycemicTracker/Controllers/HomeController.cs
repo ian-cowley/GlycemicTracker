@@ -323,6 +323,48 @@ namespace GlycemicTracker.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetOlderFoodLogs(string beforeTime, int limit = 5)
+        {
+            if (!DateTime.TryParse(beforeTime, out var parsedTime))
+            {
+                parsedTime = TimeHelper.UkNow;
+            }
+
+            var logs = await _logRepo.GetFoodLogsOlderThanAsync(parsedTime, limit);
+            var now = TimeHelper.UkNow;
+
+            var result = logs.Select(l => {
+                string timeDisplay;
+                if (l.LogTime.Date == now.Date)
+                {
+                    timeDisplay = l.LogTime.ToString("HH:mm");
+                }
+                else if (l.LogTime.Date == now.AddDays(-1).Date)
+                {
+                    timeDisplay = "Yesterday " + l.LogTime.ToString("HH:mm");
+                }
+                else
+                {
+                    timeDisplay = l.LogTime.ToString("dd MMM HH:mm");
+                }
+
+                return new {
+                    id = l.Id,
+                    foodId = l.FoodId,
+                    foodName = l.FoodName,
+                    amountGrams = l.AmountGrams,
+                    carbsGrams = l.CarbsGrams,
+                    glycemicIndex = l.GlycemicIndex,
+                    glycemicLoad = l.GlycemicLoad,
+                    logTimeDisplay = timeDisplay,
+                    logTimeIso = l.LogTime.ToString("yyyy-MM-ddTHH:mm:ss")
+                };
+            });
+
+            return Json(result);
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

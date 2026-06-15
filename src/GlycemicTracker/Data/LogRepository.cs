@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
@@ -45,6 +45,18 @@ namespace GlycemicTracker.Data
                 JOIN Foods f ON l.FoodId = f.Id
                 ORDER BY l.LogTime DESC";
             return await _db.ExecuteQueryAsync(sql, MapFoodLog);
+        }
+
+        public async Task<List<FoodLog>> GetFoodLogsOlderThanAsync(DateTime beforeTime, int limit)
+        {
+            var sql = $@"
+                SELECT TOP {limit} l.*, f.Name AS FoodName, f.GlycemicIndex
+                FROM FoodLogs l
+                JOIN Foods f ON l.FoodId = f.Id
+                WHERE l.LogTime < @beforeTime
+                ORDER BY l.LogTime DESC";
+            var parameter = new SqlParameter("@beforeTime", beforeTime);
+            return await _db.ExecuteQueryAsync(sql, MapFoodLog, parameter);
         }
 
         public async Task<List<FoodLog>> GetFoodLogsForTimeRangeAsync(DateTime start, DateTime end)

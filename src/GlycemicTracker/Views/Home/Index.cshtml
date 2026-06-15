@@ -287,29 +287,37 @@
                 <a class="btn btn-sm btn-secondary" asp-controller="Foods" asp-action="Index">Manage Food Library</a>
             </div>
             
-            @if (recentLogs.Count == 0)
-            {
-                <p class="text-secondary py-3 text-center">No foods logged today. Type in the box above to log your first meal!</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle" style="background: transparent;">
-                        <thead>
-                            <tr class="text-secondary" style="border-bottom: 2px solid var(--border-color);">
-                                <th>Time</th>
-                                <th>Food Item</th>
-                                <th class="text-center">Amount</th>
-                                <th class="text-center">Carbs</th>
-                                <th class="text-center">GI</th>
-                                <th class="text-center">GL</th>
-                                <th class="text-end">Actions</th>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle" style="background: transparent;" id="foodLogsTable">
+                    <thead>
+                        <tr class="text-secondary" style="border-bottom: 2px solid var(--border-color);">
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="selectAllLogs" style="cursor: pointer; transform: scale(1.1);" />
+                            </th>
+                            <th>Time</th>
+                            <th>Food Item</th>
+                            <th class="text-center">Amount</th>
+                            <th class="text-center">Carbs</th>
+                            <th class="text-center">GI</th>
+                            <th class="text-center">GL</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="foodLogsTableBody">
+                        @if (recentLogs.Count == 0)
+                        {
+                            <tr id="emptyLogsRow">
+                                <td colspan="8" class="text-secondary py-4 text-center">No foods logged today. Click 'Show Older Logs' below to load older entries.</td>
                             </tr>
-                        </thead>
-                        <tbody>
+                        }
+                        else
+                        {
                             @foreach (var log in recentLogs)
                             {
                                 <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="text-align: center;">
+                                        <input type="checkbox" class="log-select-checkbox" data-food-id="@log.FoodId" data-amount="@log.AmountGrams" style="cursor: pointer; transform: scale(1.1);" />
+                                    </td>
                                     <td class="text-nowrap text-secondary" style="font-size:0.85rem;">@log.LogTime.ToString("HH:mm")</td>
                                     <td>
                                         <div class="fw-semibold">@log.FoodName</div>
@@ -338,10 +346,19 @@
                                     </td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top" style="border-color: rgba(255,255,255,0.05) !important;">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnLoadOlderLogs" data-oldest-time="@(recentLogs.LastOrDefault()?.LogTime.ToString("yyyy-MM-ddTHH:mm:ss") ?? ViewBag.TargetDate.AddHours(23).AddMinutes(59).ToString("yyyy-MM-ddTHH:mm:ss"))">
+                    <i class="bi bi-clock-history me-1"></i>Show Older Logs
+                </button>
+                <button type="button" class="btn btn-sm btn-info" id="btnBulkLogSelected" disabled style="box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);">
+                    <i class="bi bi-box-arrow-in-down me-1"></i>Log Selected to Now (<span id="selectedLogsCount">0</span>)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -398,3 +415,148 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Function to update the bulk log button state
+            function updateBulkLogButtonState() {
+                const checkedCount = $('.log-select-checkbox:checked').length;
+                $('#selectedLogsCount').text(checkedCount);
+                if (checkedCount > 0) {
+                    $('#btnBulkLogSelected').prop('disabled', false);
+                } else {
+                    $('#btnBulkLogSelected').prop('disabled', true);
+                }
+            }
+
+            // Select all checkbox change
+            $(document).on('change', '#selectAllLogs', function() {
+                const isChecked = $(this).is(':checked');
+                $('.log-select-checkbox').prop('checked', isChecked);
+                updateBulkLogButtonState();
+            });
+
+            // Individual checkbox change
+            $(document).on('change', '.log-select-checkbox', function() {
+                const allCheckboxes = $('.log-select-checkbox');
+                const checkedCheckboxes = $('.log-select-checkbox:checked');
+                
+                if (allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length) {
+                    $('#selectAllLogs').prop('checked', true);
+                } else {
+                    $('#selectAllLogs').prop('checked', false);
+                }
+                
+                updateBulkLogButtonState();
+            });
+
+            // "Show Older Logs" button click
+            $('#btnLoadOlderLogs').on('click', function() {
+                const $btn = $(this);
+                const beforeTime = $btn.attr('data-oldest-time');
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...');
+
+                $.ajax({
+                    url: '/Home/GetOlderFoodLogs',
+                    type: 'GET',
+                    data: { beforeTime: beforeTime, limit: 5 },
+                    success: function(data) {
+                        $btn.prop('disabled', false).html('<i class="bi bi-clock-history me-1"></i>Show Older Logs');
+                        
+                        if (data && data.length > 0) {
+                            // Remove empty row if it exists
+                            $('#emptyLogsRow').remove();
+                            
+                            // Loop through data and append rows
+                            data.forEach(function(item) {
+                                // Determine GI class
+                                let giClass = 'gi-low';
+                                if (item.glycemicIndex > 70) giClass = 'gi-high';
+                                else if (item.glycemicIndex > 55) giClass = 'gi-medium';
+                                
+                                const rowHtml = `
+                                    <tr style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" class="log-select-checkbox" data-food-id="${item.foodId}" data-amount="${item.amountGrams}" style="cursor: pointer; transform: scale(1.1);" />
+                                        </td>
+                                        <td class="text-nowrap text-secondary" style="font-size:0.85rem;">${item.logTimeDisplay}</td>
+                                        <td>
+                                            <div class="fw-semibold">${item.foodName}</div>
+                                        </td>
+                                        <td class="text-center">${Math.round(item.amountGrams)}g</td>
+                                        <td class="text-center text-warning">${item.carbsGrams.toFixed(1)}g</td>
+                                        <td class="text-center">
+                                            <span class="badge badge-gi ${giClass}" style="font-size:0.75rem; padding: 4px 6px;">${item.glycemicIndex}</span>
+                                        </td>
+                                        <td class="text-center text-info">${item.glycemicLoad.toFixed(1)}</td>
+                                        <td class="text-end">
+                                            <form action="/Logs/DeleteFoodLog" method="post" onsubmit="return confirm('Delete this food log?');">
+                                                <input type="hidden" name="id" value="${item.id}" />
+                                                <button type="submit" class="btn btn-link text-danger p-0" style="text-decoration:none;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                `;
+                                $('#foodLogsTableBody').append(rowHtml);
+                            });
+                            
+                            // Update oldest time attribute to the last item's time
+                            const lastItem = data[data.length - 1];
+                            $btn.attr('data-oldest-time', lastItem.logTimeIso);
+                        } else {
+                            $btn.prop('disabled', true).text('No More Logs Found');
+                        }
+                        
+                        updateBulkLogButtonState();
+                    },
+                    error: function() {
+                        $btn.prop('disabled', false).html('<i class="bi bi-clock-history me-1"></i>Show Older Logs');
+                        alert('Error loading older logs. Please try again.');
+                    }
+                });
+            });
+
+            // "Log Selected to Now" button click
+            $('#btnBulkLogSelected').on('click', function() {
+                const selectedItems = [];
+                $('.log-select-checkbox:checked').each(function() {
+                    selectedItems.push({
+                        foodId: parseInt($(this).attr('data-food-id')),
+                        amountGrams: parseFloat($(this).attr('data-amount'))
+                    });
+                });
+
+                if (selectedItems.length === 0) return;
+
+                const $btn = $(this);
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Logging...');
+
+                $.ajax({
+                    url: '/Logs/BulkAddFoodLogs',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(selectedItems),
+                    success: function(response) {
+                        if (response.success) {
+                            // Reload the page to refresh stats, history, and chart
+                            window.location.reload();
+                        } else {
+                            $btn.prop('disabled', false).html('<i class="bi bi-box-arrow-in-down me-1"></i>Log Selected to Now (<span id="selectedLogsCount">' + selectedItems.length + '</span>)');
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        $btn.prop('disabled', false).html('<i class="bi bi-box-arrow-in-down me-1"></i>Log Selected to Now (<span id="selectedLogsCount">' + selectedItems.length + '</span>)');
+                        alert('Error logging selected items. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+}

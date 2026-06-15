@@ -130,5 +130,64 @@ namespace GlycemicTracker.Controllers
             TempData["SuccessMessage"] = "Glucose reading deleted.";
             return RedirectToAction("Index", "Home");
         }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> BulkAddFoodLogs([FromBody] List<BulkLogItem> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return Json(new { success = false, message = "No food items selected." });
+            }
+
+            try
+            {
+                DateTime logTime = TimeHelper.UkNow;
+                
+                foreach (var item in items)
+                {
+                    var food = await _foodRepo.GetFoodByIdAsync(item.FoodId);
+                    if (food == null) continue;
+
+                    double scale = item.AmountGrams / 100.0;
+                    var carbs = food.CarbsPer100g * scale;
+                    var sugars = food.SugarPer100g * scale;
+                    var fiber = food.FiberPer100g * scale;
+                    var protein = food.ProteinPer100g * scale;
+                    var fat = food.FatPer100g * scale;
+                    var alcohol = food.AlcoholGrams * scale;
+                    var glycemicLoad = (carbs * food.GlycemicIndex) / 100.0;
+
+                    var newLog = new FoodLog
+                    {
+                        FoodId = food.Id,
+                        AmountGrams = item.AmountGrams,
+                        LogTime = logTime,
+                        CarbsGrams = Math.Round(carbs, 2),
+                        SugarGrams = Math.Round(sugars, 2),
+                        FiberGrams = Math.Round(fiber, 2),
+                        ProteinGrams = Math.Round(protein, 2),
+                        FatGrams = Math.Round(fat, 2),
+                        GlycemicLoad = Math.Round(glycemicLoad, 2),
+                        AlcoholGrams = Math.Round(alcohol, 2)
+                    };
+
+                    await _logRepo.AddFoodLogAsync(newLog);
+                }
+
+                TempData["SuccessMessage"] = $"Logged {items.Count} items to current time.";
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+    }
+
+    public class BulkLogItem
+    {
+        public int FoodId { get; set; }
+        public double AmountGrams { get; set; }
     }
 }
