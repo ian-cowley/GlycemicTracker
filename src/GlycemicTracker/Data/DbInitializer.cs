@@ -314,7 +314,8 @@ namespace GlycemicTracker.Data
                 ("Tesco Finest Cooked Jumbo King Prawns", 0, 0.4, 0.4, 0.0, 18.4, 0.5, 80),
                 ("Tesco Italian Chopped Tomatoes", 35, 4.0, 4.0, 0.9, 1.4, 0.2, 25),
                 ("Tesco Lean Pork Mince 5% Fat", 0, 0.2, 0.2, 0.0, 20.5, 4.8, 126),
-                ("Tesco Ground Almonds", 15, 6.9, 4.2, 9.1, 21.1, 55.8, 632)
+                ("Tesco Ground Almonds", 15, 6.9, 4.2, 9.1, 21.1, 55.8, 632),
+                ("Baking Powder", 70, 33.6, 0.3, 2.9, 3.5, 0.7, 161)
             };
 
             using (var transaction = connection.BeginTransaction())
